@@ -220,11 +220,154 @@ Weighted count = 100 * 0.70 + 20 * 1.0 = 90
 
 ---
 
+## Implementation Deep Dive
+
+### Distributed Token Bucket (Redis)
+
+```python
+import redis
+import time
+
+class DistributedTokenBucket:
+    """Thread-safe, distributed rate limiter using Redis"""
+
+    def __init__(self, redis_client, key_prefix="ratelimit"):
+        self.redis = redis_client
+        self.key_prefix = key_prefix
+
+    def allow_request(self, user_id: str, rate: float, capacity: int) -> bool:
+        """
+        Atomic token bucket using Redis Lua script.
+        rate: tokens per second
+        capacity: max burst size
+        """
+        key = f"{self.key_prefix}:{user_id}"
+        now = time.time()
+
+        # Lua script for atomic operation
+        lua_script = """
+        local key = KEYS[1]
+        local rate = tonumber(ARGV[1])
+        local capacity = tonumber(ARGV[2])
+        local now = tonumber(ARGV[3])
+        local requested = tonumber(ARGV[4])
+
+        local data = redis.call('HMGET', key, 'tokens', 'last_update')
+        local tokens = tonumber(data[1]) or capacity
+        local last_update = tonumber(data[2]) or now
+
+        -- Refill tokens based on time elapsed
+        local elapsed = now - last_update
+        tokens = math.min(capacity, tokens + (elapsed * rate))
+
+        local allowed = 0
+        if tokens >= requested then
+            tokens = tokens - requested
+            allowed = 1
+        end
+
+        redis.call('HMSET', key, 'tokens', tokens, 'last_update', now)
+        redis.call('EXPIRE', key, 3600)  -- Clean up after 1 hour
+
+        return allowed
+        """
+
+        result = self.redis.eval(lua_script, 1, key, rate, capacity, now, 1)
+        return result == 1
+
+# Usage
+redis_client = redis.Redis(host='localhost', port=6379)
+limiter = DistributedTokenBucket(redis_client)
+
+# Allow 100 requests/minute with burst of 10
+if limiter.allow_request("user_123", rate=100/60, capacity=10):
+    process_request()
+else:
+    return HttpResponse(status=429, headers={"Retry-After": "60"})
+```
+
+### Sliding Window Counter (Production Implementation)
+
+```python
+class SlidingWindowCounter:
+    """Memory-efficient sliding window using two counters"""
+
+    def __init__(self, redis_client, window_size_sec=60):
+        self.redis = redis_client
+        self.window_size = window_size_sec
+
+    def allow_request(self, user_id: str, limit: int) -> tuple[bool, dict]:
+        now = time.time()
+        current_window = int(now // self.window_size)
+        prev_window = current_window - 1
+        window_progress = (now % self.window_size) / self.window_size
+
+        curr_key = f"sw:{user_id}:{current_window}"
+        prev_key = f"sw:{user_id}:{prev_window}"
+
+        # Get both window counts atomically
+        pipe = self.redis.pipeline()
+        pipe.get(prev_key)
+        pipe.incr(curr_key)
+        pipe.expire(curr_key, self.window_size * 2)
+        prev_count, curr_count, _ = pipe.execute()
+
+        prev_count = int(prev_count or 0)
+
+        # Weighted count: more weight on current as window progresses
+        weighted_count = prev_count * (1 - window_progress) + curr_count
+
+        allowed = weighted_count <= limit
+
+        return allowed, {
+            "limit": limit,
+            "remaining": max(0, int(limit - weighted_count)),
+            "reset": int((current_window + 1) * self.window_size)
+        }
+```
+
+### Rate Limit Response Headers
+
+```python
+# Always include these headers in API responses
+def add_rate_limit_headers(response, info):
+    response.headers["X-RateLimit-Limit"] = str(info["limit"])
+    response.headers["X-RateLimit-Remaining"] = str(info["remaining"])
+    response.headers["X-RateLimit-Reset"] = str(info["reset"])
+    if not info.get("allowed", True):
+        response.headers["Retry-After"] = str(info["reset"] - time.time())
+```
+
+### Multi-Tier Rate Limiting
+
+```python
+class TieredRateLimiter:
+    """Different limits for different time windows"""
+
+    def __init__(self, redis_client):
+        self.limiters = [
+            SlidingWindowCounter(redis_client, window_size_sec=1),    # Per-second
+            SlidingWindowCounter(redis_client, window_size_sec=60),   # Per-minute
+            SlidingWindowCounter(redis_client, window_size_sec=3600), # Per-hour
+        ]
+        self.limits = [10, 100, 1000]  # Requests per tier
+
+    def allow_request(self, user_id: str) -> bool:
+        for limiter, limit in zip(self.limiters, self.limits):
+            allowed, _ = limiter.allow_request(user_id, limit)
+            if not allowed:
+                return False
+        return True
+```
+
+---
+
 ## Interview Tips
 
 When discussing Rate Limiting:
 1. Know at least Token Bucket and Sliding Window
 2. Explain trade-offs (memory, precision, bursting)
-3. Discuss distributed implementation (Redis, atomic operations)
-4. Mention HTTP 429 response code
+3. Discuss distributed implementation (Redis + Lua for atomicity)
+4. Mention HTTP 429 response code and rate limit headers
+5. Explain multi-tier limiting (per-second + per-minute + per-hour)
 

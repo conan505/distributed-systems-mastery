@@ -133,6 +133,145 @@ Every step needs a rollback plan:
 
 ---
 
+## Implementation Deep Dive
+
+### Orchestration Pattern (Production-Ready)
+
+```python
+from enum import Enum
+from dataclasses import dataclass
+from typing import List, Callable, Optional
+import uuid
+
+class SagaState(Enum):
+    STARTED = "started"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    COMPENSATING = "compensating"
+    FAILED = "failed"
+
+@dataclass
+class SagaStep:
+    name: str
+    action: Callable          # Forward action
+    compensation: Callable    # Rollback action
+
+@dataclass
+class SagaLog:
+    step_name: str
+    status: str               # "success" | "failed"
+    result: Optional[dict]
+
+class SagaOrchestrator:
+    def __init__(self, saga_id: str = None):
+        self.saga_id = saga_id or str(uuid.uuid4())
+        self.steps: List[SagaStep] = []
+        self.executed: List[SagaLog] = []
+        self.state = SagaState.STARTED
+
+    def add_step(self, step: SagaStep):
+        self.steps.append(step)
+        return self
+
+    def execute(self, context: dict) -> bool:
+        """Execute saga with automatic compensation on failure"""
+        self.state = SagaState.RUNNING
+
+        for step in self.steps:
+            try:
+                result = step.action(context)
+                self.executed.append(SagaLog(step.name, "success", result))
+                context.update(result or {})  # Pass data to next step
+            except Exception as e:
+                self.executed.append(SagaLog(step.name, "failed", {"error": str(e)}))
+                self._compensate(context)
+                return False
+
+        self.state = SagaState.COMPLETED
+        return True
+
+    def _compensate(self, context: dict):
+        """Execute compensations in reverse order"""
+        self.state = SagaState.COMPENSATING
+
+        # Reverse through executed steps (skip the failed one)
+        for log in reversed(self.executed[:-1]):
+            step = next(s for s in self.steps if s.name == log.step_name)
+            try:
+                step.compensation(context)
+            except Exception as e:
+                # Log compensation failure - may need manual intervention
+                print(f"Compensation failed for {step.name}: {e}")
+
+        self.state = SagaState.FAILED
+
+# Usage Example - E-commerce Order Saga
+def create_order(ctx):
+    order_id = db.orders.insert(ctx['items'], status='pending')
+    return {"order_id": order_id}
+
+def cancel_order(ctx):
+    db.orders.update(ctx['order_id'], status='cancelled')
+
+def reserve_inventory(ctx):
+    for item in ctx['items']:
+        db.inventory.decrement(item['sku'], item['qty'])
+    return {"inventory_reserved": True}
+
+def release_inventory(ctx):
+    for item in ctx['items']:
+        db.inventory.increment(item['sku'], item['qty'])
+
+def charge_payment(ctx):
+    payment_id = payment_gateway.charge(ctx['user_id'], ctx['amount'])
+    return {"payment_id": payment_id}
+
+def refund_payment(ctx):
+    payment_gateway.refund(ctx['payment_id'])
+
+# Build and execute saga
+saga = SagaOrchestrator()
+saga.add_step(SagaStep("create_order", create_order, cancel_order))
+saga.add_step(SagaStep("reserve_inventory", reserve_inventory, release_inventory))
+saga.add_step(SagaStep("charge_payment", charge_payment, refund_payment))
+
+success = saga.execute({"items": [...], "user_id": "u123", "amount": 99.99})
+```
+
+### Key Implementation Principles
+
+| Principle | Implementation |
+|-----------|----------------|
+| **Idempotency** | Use idempotency keys; check if step already executed |
+| **State Persistence** | Store saga state in DB before each step (crash recovery) |
+| **Timeout Handling** | Set deadlines per step; auto-compensate on timeout |
+| **Retry Logic** | Retry transient failures before compensating |
+
+### Choreography with Events
+
+```python
+# Each service publishes and subscribes to events
+class OrderService:
+    def create_order(self, data):
+        order = self.db.create_order(data)
+        self.publish("OrderCreated", {"order_id": order.id})
+
+    @subscribe("PaymentFailed")
+    def on_payment_failed(self, event):
+        self.db.cancel_order(event.order_id)  # Compensation
+
+class PaymentService:
+    @subscribe("InventoryReserved")
+    def on_inventory_reserved(self, event):
+        try:
+            self.charge(event.order_id)
+            self.publish("PaymentCompleted", event)
+        except:
+            self.publish("PaymentFailed", event)  # Trigger compensations
+```
+
+---
+
 ## Real-World Examples
 
 | Company | Use Case |
@@ -141,6 +280,12 @@ Every step needs a rollback plan:
 | **Amazon** | Order fulfillment across warehouses |
 | **Airbnb** | Booking + payment + host notification |
 | **Netflix** | Content licensing workflows |
+
+### Tools & Frameworks
+- **Temporal.io** - Workflow orchestration with saga support
+- **Camunda** - BPMN-based saga orchestration
+- **Eventuate Tram** - Event-driven sagas for Java/Spring
+- **AWS Step Functions** - Serverless saga orchestration
 
 ---
 
@@ -151,4 +296,5 @@ When discussing Saga in interviews:
 2. Discuss both choreography and orchestration approaches
 3. Emphasize compensating transactions
 4. Mention idempotency requirements
+5. Explain how to handle compensation failures (dead letter queue, manual intervention)
 

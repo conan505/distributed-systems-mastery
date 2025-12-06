@@ -171,28 +171,100 @@ Everything else unchanged!
 
 ---
 
-## Code Sketch
+## Implementation Deep Dive
+
+### Core Data Structures
+```python
+import hashlib
+import bisect
+
+class ConsistentHash:
+    def __init__(self, vnodes=150):
+        self.vnodes = vnodes           # Virtual nodes per physical node
+        self.ring = {}                  # hash_value -> node_id
+        self.sorted_keys = []           # Sorted hash positions for binary search
+        self.nodes = set()              # Track physical nodes
+
+    def _hash(self, key: str) -> int:
+        """Use MD5 for uniform distribution (not cryptographic security)"""
+        return int(hashlib.md5(key.encode()).hexdigest(), 16)
+
+    def add_node(self, node: str):
+        """Add physical node with virtual nodes to the ring"""
+        self.nodes.add(node)
+        for i in range(self.vnodes):
+            vnode_key = f"{node}:vnode{i}"
+            h = self._hash(vnode_key)
+            self.ring[h] = node
+            bisect.insort(self.sorted_keys, h)  # Maintain sorted order
+
+    def remove_node(self, node: str):
+        """Remove node and all its virtual nodes"""
+        self.nodes.discard(node)
+        for i in range(self.vnodes):
+            h = self._hash(f"{node}:vnode{i}")
+            if h in self.ring:
+                del self.ring[h]
+                self.sorted_keys.remove(h)
+
+    def get_node(self, key: str) -> str:
+        """Find responsible node using binary search - O(log n)"""
+        if not self.ring:
+            return None
+        h = self._hash(key)
+        # Binary search for first position >= hash
+        idx = bisect.bisect_left(self.sorted_keys, h)
+        if idx == len(self.sorted_keys):
+            idx = 0  # Wrap around to first node
+        return self.ring[self.sorted_keys[idx]]
+
+    def get_replicas(self, key: str, n: int = 3) -> list:
+        """Get n replica nodes for replication (walk clockwise)"""
+        if not self.ring or n > len(self.nodes):
+            return list(self.nodes)
+
+        h = self._hash(key)
+        idx = bisect.bisect_left(self.sorted_keys, h)
+        replicas = []
+        seen = set()
+
+        while len(replicas) < n:
+            if idx >= len(self.sorted_keys):
+                idx = 0
+            node = self.ring[self.sorted_keys[idx]]
+            if node not in seen:
+                replicas.append(node)
+                seen.add(node)
+            idx += 1
+        return replicas
+```
+
+### Key Implementation Details
+
+| Aspect | Implementation Choice | Why |
+|--------|----------------------|-----|
+| **Hash Function** | MD5/SHA1 | Uniform distribution, fast |
+| **Virtual Nodes** | 100-200 per node | Balance load variance |
+| **Lookup** | Binary search (bisect) | O(log n) instead of O(n) |
+| **Ring Storage** | Dict + Sorted List | Fast lookup + ordered traversal |
+
+### Production Considerations
 
 ```python
-class ConsistentHash:
-    def __init__(self, vnodes=100):
-        self.ring = {}  # position -> node
-        self.vnodes = vnodes
-        self.sorted_keys = []
-    
-    def add_node(self, node):
-        for i in range(self.vnodes):
-            key = hash(f"{node}:{i}")
-            self.ring[key] = node
-        self.sorted_keys = sorted(self.ring.keys())
-    
-    def get_node(self, key):
-        h = hash(key)
-        # Find first node position >= key's hash
-        for pos in self.sorted_keys:
-            if pos >= h:
-                return self.ring[pos]
-        return self.ring[self.sorted_keys[0]]  # Wrap around
+# 1. Bounded Load (Google's improvement)
+def get_node_bounded(self, key, max_load_factor=1.25):
+    """Redirect to next node if current is overloaded"""
+    node = self.get_node(key)
+    avg_load = total_keys / len(self.nodes)
+    while self.load[node] > avg_load * max_load_factor:
+        node = self.get_next_node(node)
+    return node
+
+# 2. Weighted nodes (heterogeneous clusters)
+def add_node(self, node, weight=1):
+    vnodes = self.base_vnodes * weight  # More vnodes = more keys
+    for i in range(vnodes):
+        ...
 ```
 
 ---
