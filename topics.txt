@@ -1,0 +1,101 @@
+#Architectural patterns to design systems that scale
+
+
+
+1.CQRS & Event Sourcing
+2.Saga Pattern
+3.Strangler Fig Pattern
+4.Bulkhead Pattern
+5.Transactional Outbox
+6.SEDA (Staged Event Driven Architecture)
+7.Orchestration vs. Choreography
+8.Sidecar Pattern
+9.LMAX Disruptor (ultra-low latency queues)
+10.Backpressure
+11. Leader-Follower Replication
+12.Event-Carried State Transfer
+13.Temporal Workflow Pattern.
+14.Dual Write Avoidance (beyond transactional outbox)
+
+
+#Algorithms to design systems that scale
+
+
+1.Consistent Hashing
+2.Load Balancing Algorithms
+3.Leaky Bucket & Token Bucket
+4.Bloom Filters
+5.Merkle Trees
+6.Quorum Algorithms
+7.Leader Election Algorithms
+8.Distributed Lock Algorithms
+9.Raft / Paxos
+10.Gossip Protocol
+11.Vector Clocks / Lamport Timestamps
+12.Two-Phase / Three-Phase Commit
+13.Reservoir Sampling
+14.HyperLogLog
+15.CRDTs
+16.Sharding Algorithms
+17.MapReduce
+18.Tail Latency Reduction (Hedged Requests)
+19.Circuit Breaker Pattern
+20.Split-Brain Resolution Algorithms
+21.Load Shedding Algorithms
+22.Byzantine Fault Tolerance
+23.Skip Lists
+
+
+#Techniques to make LLMs faster + cheaper
+
+
+1.LoRA
+2.Quantization
+3.Pruning
+4.Distillation
+5.Weight Sharing
+6.Flash Attention
+7.KV-Cache Compression
+8.Sparse MoE
+9.Gradient Checkpointing
+10.Mixed Precision Training
+11.Parameter-Efficient Fine-Tuning
+13.Sharded Training
+14.CPU Offloading
+15.Retrieval-Augmented Compression
+16.Speculative Decoding
+
+
+#Memory systems for LLMs to think long term.
+
+
+KV-Cache
+Compressed KV-Cache
+External Vector DBs
+Episodic Memory
+Working Memory Buffers
+Attention over Past States
+Recurrent Memory Layers
+Memory-Augmented Transformers
+Long-Context Attention
+Sliding Window Attention
+Hierarchical Memory
+Differentiable Neural Computers
+Lifelong Learning Memory
+Retrieval-Augmented Memory
+Local + Global Memory Fusion
+Forgetting Mechanisms
+
+
+#Miscellaneous 
+
+How to build idempotent apis
+Client side load balancing
+Layer 4 vs layer 7
+QUIC protocol
+Timeouts, retries, backoff with jitter
+Rpc vs rest
+Circuit Breakers: Implement circuit breakers (e.g., Hystrix, Resilience4j)
+Diff b/w  message queues and worker pools, and failure handling there
+Race conditions -> database-level approaches like pessimistic locking and optimistic concurrency control to distributed coordination mechanisms. The key is understanding when to use atomicity and transactions versus explicit locking strategies. For distributed systems, you might need distributed locks, two-phase commit protocols, or queue-based serialization
+
