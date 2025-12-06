@@ -2,11 +2,11 @@
 site_name: Distributed Systems Learning Hub
 site_description: In-depth learning resource for distributed systems, system design, and LLM optimization
 site_author: Rahul Garg
-site_url: https://rahulgarg7042.github.io/distributed-systems/
+site_url: https://conan505.github.io/distributed-systems-mastery/
 
 # Repository
-repo_name: distributed-systems
-repo_url: https://github.com/rahulgarg7042/distributed-systems
+repo_name: distributed-systems-mastery
+repo_url: https://github.com/conan505/distributed-systems-mastery
 edit_uri: edit/main/docs/
 
 # Theme Configuration
