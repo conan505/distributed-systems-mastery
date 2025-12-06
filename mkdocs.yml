@@ -1,0 +1,225 @@
+# Project Information
+site_name: Distributed Systems Learning Hub
+site_description: In-depth learning resource for distributed systems, system design, and LLM optimization
+site_author: Rahul Garg
+site_url: https://rahulgarg7042.github.io/distributed-systems/
+
+# Repository
+repo_name: distributed-systems
+repo_url: https://github.com/rahulgarg7042/distributed-systems
+edit_uri: edit/main/docs/
+
+# Theme Configuration
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+  icon:
+    repo: fontawesome/brands/github
+
+# Plugins
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])'
+  - tags
+
+# Extensions
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Extra Configuration
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/rahulgarg7042
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/in/rahulgarg
+  generator: false
+
+# Navigation
+nav:
+  - Home: index.md
+  - Concepts:
+    - Overview: concepts/README.md
+    - Architectural Patterns:
+      - CQRS & Event Sourcing: concepts/01-architectural-patterns/cqrs-event-sourcing.md
+      - Saga Pattern: concepts/01-architectural-patterns/saga-pattern.md
+      - Circuit Breaker: concepts/01-architectural-patterns/circuit-breaker.md
+      - Bulkhead Pattern: concepts/01-architectural-patterns/bulkhead-pattern.md
+      - Transactional Outbox: concepts/01-architectural-patterns/transactional-outbox.md
+      - SEDA: concepts/01-architectural-patterns/seda.md
+      - Orchestration vs Choreography: concepts/01-architectural-patterns/orchestration-vs-choreography.md
+      - Sidecar Pattern: concepts/01-architectural-patterns/sidecar-pattern.md
+      - LMAX Disruptor: concepts/01-architectural-patterns/lmax-disruptor.md
+      - Backpressure: concepts/01-architectural-patterns/backpressure.md
+      - Strangler Fig Pattern: concepts/01-architectural-patterns/strangler-fig-pattern.md
+      - Dual Write Problem: concepts/01-architectural-patterns/dual-write-problem.md
+      - Event-Carried State Transfer: concepts/01-architectural-patterns/event-carried-state-transfer.md
+      - Leader-Follower Replication: concepts/01-architectural-patterns/leader-follower-replication.md
+      - Temporal Workflow: concepts/01-architectural-patterns/temporal-workflow.md
+    - Distributed Algorithms:
+      - Consistent Hashing: concepts/02-distributed-algorithms/consistent-hashing.md
+      - Rate Limiting: concepts/02-distributed-algorithms/rate-limiting-algorithms.md
+      - Bloom Filters: concepts/02-distributed-algorithms/bloom-filters.md
+      - Consensus Algorithms: concepts/02-distributed-algorithms/consensus-algorithms.md
+      - Vector Clocks: concepts/02-distributed-algorithms/vector-clocks.md
+      - Gossip Protocol: concepts/02-distributed-algorithms/gossip-protocol.md
+      - Distributed Locks: concepts/02-distributed-algorithms/distributed-locks.md
+      - Two-Phase Commit: concepts/02-distributed-algorithms/two-phase-commit.md
+      - Leader Election: concepts/02-distributed-algorithms/leader-election.md
+      - Quorum: concepts/02-distributed-algorithms/quorum.md
+      - Sharding: concepts/02-distributed-algorithms/sharding.md
+      - MapReduce: concepts/02-distributed-algorithms/mapreduce.md
+      - Hedged Requests: concepts/02-distributed-algorithms/hedged-requests.md
+      - Load Shedding: concepts/02-distributed-algorithms/load-shedding.md
+      - Split Brain: concepts/02-distributed-algorithms/split-brain.md
+      - Byzantine Fault Tolerance: concepts/02-distributed-algorithms/byzantine-fault-tolerance.md
+      - Reservoir Sampling: concepts/02-distributed-algorithms/reservoir-sampling.md
+      - Tail Latency: concepts/02-distributed-algorithms/tail-latency.md
+    - Data Structures:
+      - B-Trees: concepts/03-data-structures/b-trees.md
+      - LSM Trees: concepts/03-data-structures/lsm-trees.md
+      - Skip Lists: concepts/03-data-structures/skip-lists.md
+      - Merkle Trees: concepts/03-data-structures/merkle-trees.md
+      - CRDTs: concepts/03-data-structures/crdts.md
+      - HyperLogLog: concepts/03-data-structures/hyperloglog.md
+    - Low-Level Design:
+      - Design Patterns Overview: concepts/04-low-level-design/design-patterns-overview.md
+      - Factory Pattern: concepts/04-low-level-design/factory-pattern.md
+      - Strategy Pattern: concepts/04-low-level-design/strategy-pattern.md
+      - Observer Pattern: concepts/04-low-level-design/observer-pattern.md
+      - Singleton Pattern: concepts/04-low-level-design/singleton-pattern.md
+      - Builder Pattern: concepts/04-low-level-design/builder-pattern.md
+    - System Design:
+      - Load Balancing: concepts/05-system-design/load-balancing.md
+      - Layer 4 vs Layer 7: concepts/05-system-design/layer4-vs-layer7.md
+      - Caching Strategies: concepts/05-system-design/caching-strategies.md
+      - Message Queues: concepts/05-system-design/message-queues.md
+      - Message Queues vs Worker Pools: concepts/05-system-design/message-queues-vs-worker-pools.md
+      - Database Scaling: concepts/05-system-design/database-scaling.md
+      - API Design: concepts/05-system-design/api-design.md
+      - Microservices Architecture: concepts/05-system-design/microservices-architecture.md
+      - CDN & Edge Computing: concepts/05-system-design/cdn-edge-computing.md
+      - Distributed Tracing: concepts/05-system-design/distributed-tracing.md
+      - Idempotency: concepts/05-system-design/idempotency.md
+      - Retry Strategies: concepts/05-system-design/retry-strategies.md
+      - Client-Side Load Balancing: concepts/05-system-design/client-side-load-balancing.md
+      - RPC vs REST: concepts/05-system-design/rpc-vs-rest.md
+      - QUIC Protocol: concepts/05-system-design/quic-protocol.md
+    - Concurrency:
+      - Race Conditions: concepts/06-concurrency/race-conditions.md
+      - Locks & Synchronization: concepts/06-concurrency/locks-synchronization.md
+      - Thread Pools: concepts/06-concurrency/thread-pools.md
+    - LLM Optimization:
+      - LoRA: concepts/07-llm-optimization/lora.md
+      - Quantization: concepts/07-llm-optimization/quantization.md
+      - KV-Cache: concepts/07-llm-optimization/kv-cache.md
+      - Flash Attention: concepts/07-llm-optimization/flash-attention.md
+      - Sparse MoE: concepts/07-llm-optimization/sparse-moe.md
+      - Pruning & Distillation: concepts/07-llm-optimization/pruning-distillation.md
+      - Gradient Checkpointing: concepts/07-llm-optimization/gradient-checkpointing.md
+      - Mixed Precision: concepts/07-llm-optimization/mixed-precision.md
+      - Speculative Decoding: concepts/07-llm-optimization/speculative-decoding.md
+      - Sharded Training: concepts/07-llm-optimization/sharded-training.md
+      - CPU Offloading: concepts/07-llm-optimization/cpu-offloading.md
+      - Weight Sharing: concepts/07-llm-optimization/weight-sharing.md
+      - PEFT: concepts/07-llm-optimization/peft.md
+      - Retrieval-Augmented Compression: concepts/07-llm-optimization/retrieval-augmented-compression.md
+    - LLM Memory Systems:
+      - Vector Databases: concepts/08-llm-memory/vector-databases.md
+      - Attention Mechanisms: concepts/08-llm-memory/attention-mechanisms.md
+      - Sliding Window Attention: concepts/08-llm-memory/sliding-window-attention.md
+      - Hierarchical Memory: concepts/08-llm-memory/hierarchical-memory.md
+      - Working Memory Buffers: concepts/08-llm-memory/working-memory-buffers.md
+      - Retrieval-Augmented Memory: concepts/08-llm-memory/retrieval-augmented-memory.md
+      - Episodic Memory: concepts/08-llm-memory/episodic-memory.md
+      - Long-Context Attention: concepts/08-llm-memory/long-context-attention.md
+      - Memory-Augmented Transformers: concepts/08-llm-memory/memory-augmented-transformers.md
+      - Forgetting Mechanisms: concepts/08-llm-memory/forgetting-mechanisms.md
+      - Recurrent Memory Layers: concepts/08-llm-memory/recurrent-memory-layers.md
+      - Differentiable Neural Computers: concepts/08-llm-memory/differentiable-neural-computers.md
+      - Lifelong Learning Memory: concepts/08-llm-memory/lifelong-learning-memory.md
+      - Local + Global Memory Fusion: concepts/08-llm-memory/local-global-memory-fusion.md
+  - Interview Questions:
+    - Companies:
+      - Adobe: interview-questions/companies/adobe.md
+      - American Express: interview-questions/companies/american-express.md
+      - Atlassian: interview-questions/companies/atlassian.md
+      - Flipkart: interview-questions/companies/flipkart.md
+      - Google: interview-questions/companies/google.md
+      - Meesho: interview-questions/companies/meesho.md
+      - Razorpay: interview-questions/companies/razorpay.md
+      - Uber: interview-questions/companies/uber.md
+      - Walmart: interview-questions/companies/walmart.md
+    - Topics:
+      - System Design Concepts: interview-questions/topics/system-design-concepts.md
+      - Behavioral Questions: interview-questions/topics/behavioral-questions.md
+      - Machine Coding: interview-questions/topics/machine-coding.md
+      - DSA Stack Problems: interview-questions/topics/dsa-stack-problems.md
+      - Composed List: interview-questions/topics/composed-list.md
+    - Resources:
+      - Learning Resources: interview-questions/resources/learning-resources.md
+      - L6 Interview Prep: interview-questions/resources/l6-interview-prep.md
+      - Companies Hiring: interview-questions/resources/companies-hiring.md
+
+# Docs directory (default is 'docs')
+docs_dir: docs
+

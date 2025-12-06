@@ -1,0 +1,103 @@
+For people who keep asking what to build in AI Engineering
+
+> Build your own Reasoner (Chain of Thought implementation)
+
+> Build your own Agent loop (ReAct pattern)
+
+> Build your own Inference Server (in C++/Rust)
+
+> Build your own Transformer from scratch (Attention is all you need)
+
+> Build your own Vector Database (HNSW index)
+
+> Build your own RAG pipeline
+
+> Build your own Flash Attention kernel (CUDA)
+
+> Build your own Quantization library (Int8/FP4 implementation)
+
+> Build your own Mixture of Experts (MoE) routing layer
+
+> Build your own Distributed training loop (FSDP/Tensor Parallelism)
+
+> Build your own KV Cache paging system (like vLLM)
+
+> Build your own Speculative Decoding system
+
+> Build your own State Space Model (Mamba implementation)
+
+> Build your own RLHF pipeline (PPO implementation)
+
+> Build your own Small Language Model (SLM)
+
+> Build your own Matrix Multiplication kernel
+
+> Build your own LoRA (Low-Rank Adaptation) trainer
+
+> Build your own Code interpreter sandbox
+
+> Build your own DPO (Direct Preference Optimization) loss function
+
+> Build your own Graph RAG system
+
+> Build your own Model merger (Model Soups/Spherical Linear Interpolation)
+
+> Build your own Interpretability tool (SAE - Sparse Autoencoders)
+
+> Build your own Synthetic data generator
+
+> Build your own Function Calling router
+
+> Build your own Structured Output parser (Context Free Grammars)
+
+> Build your own Multi-modal projector (CLIP implementation)
+
+> Build your own LLM Eval harness
+
+> Build your own Guardrails system (Input/Output filtering)
+
+> Build your own Prompt caching mechanism
+
+> Build your own Tokenizer (BPE implementation)
+
+> Build your own Autograd engine (like Micrograd)
+
+> Build your own Diffusion model (UNet + Scheduler)
+
+> Build your own Vision Transformer (ViT)
+
+> Build your own Whisper-style ASR model
+
+> Build your own Text-to-Speech pipeline
+
+> Build your own Semantic Router
+
+> Build your own Knowledge Graph builder
+
+> Build your own Data curation pipeline (MinHash/Deduplication)
+
+> Build your own AI Gateway (Load balancing/Failover)
+
+> Build your own Parameter Efficient Fine-Tuning (PEFT) library
+
+> Build your own Text-to-SQL engine
+
+> Build your own Recommendation system (Two-tower architecture)
+
+> Build your own Embedding model
+
+> Build your own Logit Processor
+
+> Build your own Softmax kernel optimization
+
+> Build your own Adversarial attack generator
+
+> Build your own Audio Spectrogram transformer
+
+> Build your own Neural Architecture Search
+
+> Build your own Model Distillation pipeline
+
+> Build your own Feature Store
+
+> Build your own Database driver (for Vectors)
