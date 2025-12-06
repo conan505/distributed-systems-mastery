@@ -3,10 +3,12 @@
 This folder contains comprehensive explanations of distributed systems concepts, organized by category. Each concept is explained with:
 
 - **What it is** - Clear definition and overview
+- **The Analogy** - Real-world comparison for intuition
 - **Why it exists** - The problem it solves
-- **How it works** - Detailed mechanism with analogies
-- **When to use it** - Real-world use cases
-- **How to use it effectively** - Best practices and implementation tips
+- **How it works** - Detailed mechanism with diagrams
+- **When to use it** - Good fit / Avoid when
+- **How to use it effectively** - Best practices
+- **Interview Tips** - Key points to mention
 
 ---
 
@@ -14,69 +16,112 @@ This folder contains comprehensive explanations of distributed systems concepts,
 
 ```
 concepts/
-├── 01-architectural-patterns/       # System design patterns for scalability
-│   ├── cqrs-event-sourcing.md
-│   ├── saga-pattern.md
-│   ├── strangler-fig-pattern.md
+├── 01-architectural-patterns/       # System design patterns (14 files)
+│   ├── backpressure.md
 │   ├── bulkhead-pattern.md
-│   ├── transactional-outbox.md
-│   ├── seda.md
-│   ├── orchestration-vs-choreography.md
-│   ├── sidecar-pattern.md
+│   ├── circuit-breaker.md
+│   ├── cqrs-event-sourcing.md
+│   ├── dual-write-problem.md
+│   ├── event-carried-state-transfer.md
+│   ├── leader-follower-replication.md
 │   ├── lmax-disruptor.md
-│   └── backpressure.md
+│   ├── orchestration-vs-choreography.md
+│   ├── saga-pattern.md
+│   ├── seda.md
+│   ├── sidecar-pattern.md
+│   ├── strangler-fig-pattern.md
+│   ├── temporal-workflow.md
+│   └── transactional-outbox.md
 │
-├── 02-distributed-algorithms/       # Core algorithms for distributed systems
-│   ├── consistent-hashing.md
-│   ├── load-balancing-algorithms.md
-│   ├── rate-limiting-algorithms.md
+├── 02-distributed-algorithms/       # Core algorithms (18 files)
 │   ├── bloom-filters.md
-│   ├── merkle-trees.md
+│   ├── byzantine-fault-tolerance.md
 │   ├── consensus-algorithms.md
-│   ├── leader-election.md
+│   ├── consistent-hashing.md
 │   ├── distributed-locks.md
-│   ├── vector-clocks.md
-│   └── gossip-protocol.md
+│   ├── gossip-protocol.md
+│   ├── hedged-requests.md
+│   ├── leader-election.md
+│   ├── load-shedding.md
+│   ├── mapreduce.md
+│   ├── quorum.md
+│   ├── rate-limiting-algorithms.md
+│   ├── reservoir-sampling.md
+│   ├── sharding.md
+│   ├── split-brain.md
+│   ├── tail-latency.md
+│   ├── two-phase-commit.md
+│   └── vector-clocks.md
 │
-├── 03-data-structures/              # Data structures for DSA interviews
-│   ├── lru-lfu-cache.md
-│   ├── tries.md
-│   ├── segment-trees.md
-│   ├── skip-lists.md
-│   ├── heaps-priority-queues.md
-│   └── probabilistic-data-structures.md
+├── 03-data-structures/              # Data structures (6 files)
+│   ├── b-trees.md
+│   ├── crdts.md
+│   ├── hyperloglog.md
+│   ├── lsm-trees.md
+│   ├── merkle-trees.md
+│   └── skip-lists.md
 │
-├── 04-low-level-design/             # LLD patterns and concepts
+├── 04-low-level-design/             # LLD patterns (6 files)
+│   ├── builder-pattern.md
 │   ├── design-patterns-overview.md
-│   ├── rate-limiter-design.md
-│   ├── notification-system.md
-│   ├── parking-lot-design.md
-│   ├── elevator-system.md
-│   ├── thread-pool.md
-│   └── cache-design.md
+│   ├── factory-pattern.md
+│   ├── observer-pattern.md
+│   ├── singleton-pattern.md
+│   └── strategy-pattern.md
 │
-├── 05-system-design/                # HLD concepts and building blocks
-│   ├── idempotent-apis.md
-│   ├── database-scaling.md
+├── 05-system-design/                # HLD concepts (15 files)
+│   ├── api-design.md
 │   ├── caching-strategies.md
-│   ├── message-queues.md
-│   ├── api-gateway.md
-│   ├── service-discovery.md
+│   ├── cdn-edge-computing.md
+│   ├── client-side-load-balancing.md
+│   ├── database-scaling.md
+│   ├── distributed-tracing.md
+│   ├── idempotency.md
+│   ├── layer4-vs-layer7.md
 │   ├── load-balancing.md
-│   └── fault-tolerance.md
+│   ├── message-queues.md
+│   ├── message-queues-vs-worker-pools.md
+│   ├── microservices-architecture.md
+│   ├── quic-protocol.md
+│   ├── retry-strategies.md
+│   └── rpc-vs-rest.md
 │
-├── 06-concurrency/                  # Concurrency and threading concepts
-│   ├── concurrency-vs-parallelism.md
-│   ├── locks-and-synchronization.md
+├── 06-concurrency/                  # Concurrency (3 files)
+│   ├── locks-synchronization.md
 │   ├── race-conditions.md
-│   ├── deadlocks.md
-│   └── thread-safety.md
+│   └── thread-pools.md
 │
-└── 07-llm-optimization/             # LLM optimization techniques
-    ├── lora.md
-    ├── quantization.md
+├── 07-llm-optimization/             # LLM optimization (14 files)
+│   ├── cpu-offloading.md
+│   ├── flash-attention.md
+│   ├── gradient-checkpointing.md
+│   ├── kv-cache.md
+│   ├── lora.md
+│   ├── mixed-precision.md
+│   ├── parameter-efficient-finetuning.md
+│   ├── pruning-distillation.md
+│   ├── quantization.md
+│   ├── retrieval-augmented-compression.md
+│   ├── sharded-training.md
+│   ├── sparse-moe.md
+│   ├── speculative-decoding.md
+│   └── weight-sharing.md
+│
+└── 08-llm-memory/                   # LLM Memory Systems (12 files)
     ├── attention-mechanisms.md
-    └── memory-systems.md
+    ├── differentiable-neural-computers.md
+    ├── episodic-memory.md
+    ├── forgetting-mechanisms.md
+    ├── hierarchical-memory.md
+    ├── lifelong-learning-memory.md
+    ├── local-global-memory-fusion.md
+    ├── long-context-attention.md
+    ├── memory-augmented-transformers.md
+    ├── recurrent-memory-layers.md
+    ├── retrieval-augmented-memory.md
+    ├── sliding-window-attention.md
+    ├── vector-databases.md
+    └── working-memory-buffers.md
 ```
 
 ---
@@ -84,25 +129,29 @@ concepts/
 ## How to Use This Guide
 
 1. **Start with fundamentals** - Begin with architectural patterns and distributed algorithms
-2. **Practice with implementations** - Each concept includes code examples where applicable
+2. **Practice with implementations** - Each concept includes code examples
 3. **Connect concepts** - Understand how patterns work together in real systems
-4. **Apply in interviews** - Use the "When to use" section for interview discussions
+4. **Apply in interviews** - Use the Interview Tips section for discussions
 
 ---
 
 ## Quick Reference by Interview Type
 
 ### DSA Interviews
-- `03-data-structures/` - LRU Cache, Tries, Segment Trees, Heaps
+- `03-data-structures/` - B-Trees, Skip Lists, LSM Trees, CRDTs, HyperLogLog
 
 ### LLD Interviews
-- `04-low-level-design/` - Design patterns, Rate Limiter, Notification System
+- `04-low-level-design/` - Design patterns (Factory, Strategy, Observer, etc.)
 
 ### HLD/System Design Interviews
-- `01-architectural-patterns/` - CQRS, Saga, Bulkhead
-- `02-distributed-algorithms/` - Consistent Hashing, Consensus
-- `05-system-design/` - Idempotency, Caching, Message Queues
+- `01-architectural-patterns/` - CQRS, Saga, Bulkhead, Circuit Breaker
+- `02-distributed-algorithms/` - Consistent Hashing, Consensus, Quorum
+- `05-system-design/` - Idempotency, Caching, Message Queues, Load Balancing
 
 ### Concurrency Interviews
-- `06-concurrency/` - Locks, Race Conditions, Thread Safety
+- `06-concurrency/` - Locks, Race Conditions, Thread Pools
+
+### LLM/AI System Design
+- `07-llm-optimization/` - LoRA, Quantization, KV-Cache, Flash Attention
+- `08-llm-memory/` - RAG, Vector DBs, Attention Mechanisms
 
