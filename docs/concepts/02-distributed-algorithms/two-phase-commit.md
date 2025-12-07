@@ -197,12 +197,159 @@ Scenario:
 
 ---
 
+## Implementation
+
+### Two-Phase Commit Coordinator
+
+```python
+from enum import Enum
+from typing import List, Dict
+import threading
+
+class TxState(Enum):
+    INIT = "init"
+    PREPARING = "preparing"
+    PREPARED = "prepared"
+    COMMITTING = "committing"
+    COMMITTED = "committed"
+    ABORTED = "aborted"
+
+class TwoPhaseCommitCoordinator:
+    """
+    Simplified 2PC coordinator with timeout handling.
+    """
+
+    def __init__(self, participants: List[str], rpc_client):
+        self.participants = participants
+        self.rpc = rpc_client
+        self.state = TxState.INIT
+        self.votes: Dict[str, bool] = {}
+        self.timeout = 30  # seconds
+
+    def execute(self, transaction) -> bool:
+        """Execute distributed transaction."""
+        try:
+            # Phase 1: Prepare
+            if not self._prepare_phase(transaction):
+                self._abort_phase()
+                return False
+
+            # Phase 2: Commit
+            self._commit_phase()
+            return True
+
+        except Exception as e:
+            self._abort_phase()
+            return False
+
+    def _prepare_phase(self, transaction) -> bool:
+        """Ask all participants to prepare."""
+        self.state = TxState.PREPARING
+
+        for participant in self.participants:
+            try:
+                vote = self.rpc(participant, "prepare", transaction,
+                              timeout=self.timeout)
+                self.votes[participant] = vote
+                if not vote:
+                    return False  # Any NO = abort
+            except TimeoutError:
+                return False
+
+        self.state = TxState.PREPARED
+        return True
+
+    def _commit_phase(self):
+        """Tell all participants to commit."""
+        self.state = TxState.COMMITTING
+
+        for participant in self.participants:
+            # Retry until success (commit must eventually succeed)
+            while True:
+                try:
+                    self.rpc(participant, "commit", timeout=self.timeout)
+                    break
+                except TimeoutError:
+                    continue  # Keep retrying
+
+        self.state = TxState.COMMITTED
+
+    def _abort_phase(self):
+        """Tell all participants to abort."""
+        for participant in self.participants:
+            try:
+                self.rpc(participant, "abort", timeout=self.timeout)
+            except:
+                pass  # Best effort
+
+        self.state = TxState.ABORTED
+```
+
+### Participant Implementation
+
+```python
+class TwoPhaseCommitParticipant:
+    """Participant in 2PC transaction."""
+
+    def __init__(self, storage):
+        self.storage = storage
+        self.pending_tx = None
+        self.state = TxState.INIT
+
+    def prepare(self, transaction) -> bool:
+        """
+        Prepare to commit - acquire locks, validate.
+        Return True if ready to commit.
+        """
+        try:
+            # Acquire locks
+            self.storage.lock(transaction.resources)
+
+            # Validate transaction
+            if not self.storage.validate(transaction):
+                self.storage.unlock(transaction.resources)
+                return False
+
+            # Write to WAL (survive crashes)
+            self.storage.write_wal("PREPARED", transaction)
+
+            self.pending_tx = transaction
+            self.state = TxState.PREPARED
+            return True
+
+        except Exception:
+            return False
+
+    def commit(self):
+        """Commit the prepared transaction."""
+        if self.state != TxState.PREPARED:
+            raise Exception("Not prepared")
+
+        self.storage.apply(self.pending_tx)
+        self.storage.write_wal("COMMITTED", self.pending_tx)
+        self.storage.unlock(self.pending_tx.resources)
+
+        self.state = TxState.COMMITTED
+        self.pending_tx = None
+
+    def abort(self):
+        """Abort and rollback."""
+        if self.pending_tx:
+            self.storage.unlock(self.pending_tx.resources)
+            self.storage.write_wal("ABORTED", self.pending_tx)
+
+        self.state = TxState.ABORTED
+        self.pending_tx = None
+```
+
+---
+
 ## Interview Tips
 
 When discussing 2PC/3PC:
 1. Explain the wedding analogy
-2. Describe the blocking problem
-3. Know why 3PC doesn't fully solve it
-4. Mention modern alternatives (Saga, TCC)
-5. Discuss trade-offs (consistency vs availability)
+2. Describe the blocking problem (coordinator crash after prepare)
+3. Know why 3PC doesn't fully solve it (network partitions)
+4. Mention modern alternatives (Saga, TCC, eventual consistency)
+5. Discuss trade-offs (strong consistency vs availability)
 

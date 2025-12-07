@@ -176,12 +176,104 @@ Combines wall clock with logical clock:
 
 ---
 
+## Implementation
+
+### Lamport Timestamp
+
+```python
+class LamportClock:
+    """Simple logical clock for event ordering."""
+
+    def __init__(self):
+        self.time = 0
+
+    def tick(self) -> int:
+        """Local event - increment and return."""
+        self.time += 1
+        return self.time
+
+    def send(self) -> int:
+        """Prepare message - return timestamp to attach."""
+        return self.tick()
+
+    def receive(self, msg_time: int) -> int:
+        """Receive message - sync clocks."""
+        self.time = max(self.time, msg_time) + 1
+        return self.time
+```
+
+### Vector Clock
+
+```python
+from typing import Dict
+
+class VectorClock:
+    """Tracks causality and detects concurrent events."""
+
+    def __init__(self, node_id: str):
+        self.node_id = node_id
+        self.clock: Dict[str, int] = {node_id: 0}
+
+    def tick(self):
+        """Local event."""
+        self.clock[self.node_id] = self.clock.get(self.node_id, 0) + 1
+
+    def send(self) -> Dict[str, int]:
+        """Return clock to attach to message."""
+        self.tick()
+        return self.clock.copy()
+
+    def receive(self, other: Dict[str, int]):
+        """Merge with received clock."""
+        for node, time in other.items():
+            self.clock[node] = max(self.clock.get(node, 0), time)
+        self.tick()
+
+    def compare(self, other: Dict[str, int]) -> str:
+        """
+        Compare two vector clocks.
+        Returns: 'before', 'after', 'concurrent'
+        """
+        dominated_by_other = all(
+            self.clock.get(k, 0) <= other.get(k, 0)
+            for k in set(self.clock) | set(other)
+        )
+        dominates_other = all(
+            other.get(k, 0) <= self.clock.get(k, 0)
+            for k in set(self.clock) | set(other)
+        )
+
+        if dominated_by_other and not dominates_other:
+            return 'before'
+        elif dominates_other and not dominated_by_other:
+            return 'after'
+        elif dominated_by_other and dominates_other:
+            return 'equal'
+        else:
+            return 'concurrent'  # Conflict!
+
+# Usage
+a = VectorClock('A')
+b = VectorClock('B')
+
+msg = a.send()          # A: {'A': 1}
+b.receive(msg)          # B: {'A': 1, 'B': 1}
+
+# Concurrent events
+a.tick()                # A: {'A': 2}
+b.tick()                # B: {'A': 1, 'B': 2}
+
+print(a.compare(b.clock))  # 'concurrent' - conflict detected!
+```
+
+---
+
 ## Interview Tips
 
 When discussing Logical Clocks:
 1. Start with "no global clock" problem
-2. Explain Lamport's simple rules
-3. Show why vector clocks are needed (concurrency detection)
-4. Discuss scalability trade-offs
+2. Explain Lamport's 3 rules (tick, send, receive)
+3. Show why vector clocks detect concurrency (neither dominates)
+4. Discuss scalability trade-offs (O(n) vector size)
 5. Mention real systems (Dynamo, Riak)
 

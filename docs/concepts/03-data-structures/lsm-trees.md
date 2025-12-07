@@ -179,12 +179,140 @@ Each level is 10x larger than previous
 
 ---
 
+## Implementation
+
+### Simplified LSM Tree
+
+```python
+import os
+import json
+from typing import Optional, Dict, List
+from sortedcontainers import SortedDict
+
+class MemTable:
+    """In-memory sorted buffer."""
+
+    def __init__(self, max_size: int = 1000):
+        self.data = SortedDict()
+        self.max_size = max_size
+
+    def put(self, key: str, value: str):
+        self.data[key] = value
+
+    def get(self, key: str) -> Optional[str]:
+        return self.data.get(key)
+
+    def delete(self, key: str):
+        self.data[key] = None  # Tombstone
+
+    def is_full(self) -> bool:
+        return len(self.data) >= self.max_size
+
+    def flush(self) -> Dict[str, str]:
+        data = dict(self.data)
+        self.data.clear()
+        return data
+
+class SSTable:
+    """Immutable sorted file on disk."""
+
+    def __init__(self, filepath: str, data: Dict[str, str] = None):
+        self.filepath = filepath
+        if data:
+            self._write(data)
+        self._load_index()
+
+    def _write(self, data: Dict[str, str]):
+        with open(self.filepath, 'w') as f:
+            for key in sorted(data.keys()):
+                f.write(f"{key}\t{data[key]}\n")
+
+    def _load_index(self):
+        """Sparse index for faster lookups."""
+        self.index = {}
+        with open(self.filepath, 'r') as f:
+            offset = 0
+            for line in f:
+                key = line.split('\t')[0]
+                self.index[key] = offset
+                offset = f.tell()
+
+    def get(self, key: str) -> Optional[str]:
+        if key not in self.index:
+            return None
+        with open(self.filepath, 'r') as f:
+            f.seek(self.index[key])
+            line = f.readline()
+            k, v = line.strip().split('\t', 1)
+            return None if v == 'None' else v
+
+class LSMTree:
+    """Simplified LSM tree with compaction."""
+
+    def __init__(self, data_dir: str):
+        self.data_dir = data_dir
+        self.memtable = MemTable()
+        self.sstables: List[SSTable] = []
+        self.sstable_counter = 0
+
+    def put(self, key: str, value: str):
+        self.memtable.put(key, value)
+        if self.memtable.is_full():
+            self._flush()
+
+    def get(self, key: str) -> Optional[str]:
+        # Check MemTable first (most recent)
+        result = self.memtable.get(key)
+        if result is not None:
+            return result
+
+        # Check SSTables (newest to oldest)
+        for sstable in reversed(self.sstables):
+            result = sstable.get(key)
+            if result is not None:
+                return result
+
+        return None
+
+    def delete(self, key: str):
+        self.memtable.delete(key)  # Write tombstone
+
+    def _flush(self):
+        """Flush MemTable to disk as new SSTable."""
+        data = self.memtable.flush()
+        filepath = f"{self.data_dir}/sstable_{self.sstable_counter}.dat"
+        self.sstables.append(SSTable(filepath, data))
+        self.sstable_counter += 1
+
+        # Trigger compaction if too many SSTables
+        if len(self.sstables) > 4:
+            self._compact()
+
+    def _compact(self):
+        """Merge oldest SSTables."""
+        merged = {}
+        for sstable in self.sstables[:2]:
+            for key in sstable.index:
+                value = sstable.get(key)
+                if value is not None:  # Skip tombstones
+                    merged[key] = value
+            os.remove(sstable.filepath)
+
+        # Create compacted SSTable
+        filepath = f"{self.data_dir}/sstable_{self.sstable_counter}.dat"
+        self.sstables = self.sstables[2:]
+        self.sstables.insert(0, SSTable(filepath, merged))
+        self.sstable_counter += 1
+```
+
+---
+
 ## Interview Tips
 
 When discussing LSM Trees:
 1. Contrast with B-trees (random vs sequential I/O)
 2. Explain MemTable → SSTable flow
-3. Discuss compaction strategies
-4. Mention read amplification trade-off
-5. Give real examples (RocksDB, Cassandra)
+3. Discuss compaction (size-tiered vs leveled)
+4. Mention read amplification trade-off (check multiple levels)
+5. Give real examples (RocksDB, Cassandra, LevelDB)
 

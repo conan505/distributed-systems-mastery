@@ -158,11 +158,123 @@ public void publishEvents() {
 
 ---
 
+## Implementation
+
+### Transactional Outbox with Polling Publisher
+
+```python
+import uuid
+from datetime import datetime
+from typing import Optional
+from dataclasses import dataclass
+import json
+
+@dataclass
+class OutboxEvent:
+    id: str
+    aggregate_type: str
+    aggregate_id: str
+    event_type: str
+    payload: dict
+    created_at: datetime
+    published_at: Optional[datetime] = None
+
+class OutboxRepository:
+    """Repository for outbox table operations."""
+
+    def __init__(self, db_connection):
+        self.db = db_connection
+
+    def save(self, event: OutboxEvent):
+        self.db.execute("""
+            INSERT INTO outbox (id, aggregate_type, aggregate_id,
+                              event_type, payload, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (event.id, event.aggregate_type, event.aggregate_id,
+              event.event_type, json.dumps(event.payload), event.created_at))
+
+    def find_unpublished(self, limit: int = 100) -> list[OutboxEvent]:
+        rows = self.db.execute("""
+            SELECT * FROM outbox
+            WHERE published_at IS NULL
+            ORDER BY created_at
+            LIMIT %s FOR UPDATE SKIP LOCKED
+        """, (limit,))
+        return [self._to_event(row) for row in rows]
+
+    def mark_published(self, event_id: str):
+        self.db.execute("""
+            UPDATE outbox SET published_at = NOW() WHERE id = %s
+        """, (event_id,))
+
+class OrderService:
+    """Example service using outbox pattern."""
+
+    def __init__(self, db, outbox_repo):
+        self.db = db
+        self.outbox = outbox_repo
+
+    def create_order(self, order_data: dict) -> str:
+        order_id = str(uuid.uuid4())
+
+        # Single transaction for data + event
+        with self.db.transaction():
+            # 1. Save business data
+            self.db.execute("""
+                INSERT INTO orders (id, customer_id, total, status)
+                VALUES (%s, %s, %s, 'CREATED')
+            """, (order_id, order_data['customer_id'], order_data['total']))
+
+            # 2. Save event to outbox (same transaction)
+            event = OutboxEvent(
+                id=str(uuid.uuid4()),
+                aggregate_type='Order',
+                aggregate_id=order_id,
+                event_type='OrderCreated',
+                payload={'order_id': order_id, **order_data},
+                created_at=datetime.utcnow()
+            )
+            self.outbox.save(event)
+
+        return order_id
+
+class OutboxPublisher:
+    """Background worker that publishes outbox events."""
+
+    def __init__(self, outbox_repo, kafka_producer):
+        self.outbox = outbox_repo
+        self.kafka = kafka_producer
+
+    def poll_and_publish(self):
+        """Called periodically (e.g., every 100ms)."""
+        events = self.outbox.find_unpublished()
+
+        for event in events:
+            try:
+                # Publish to Kafka
+                self.kafka.send(
+                    topic=f"{event.aggregate_type.lower()}-events",
+                    key=event.aggregate_id,
+                    value=json.dumps(event.payload)
+                )
+
+                # Mark as published
+                self.outbox.mark_published(event.id)
+
+            except Exception as e:
+                # Will retry on next poll
+                print(f"Failed to publish {event.id}: {e}")
+                break  # Maintain ordering
+```
+
+---
+
 ## Interview Tips
 
 When discussing Transactional Outbox:
-1. Start with the dual-write problem
-2. Explain why you can't use distributed transactions
+1. Start with the dual-write problem (DB + broker not atomic)
+2. Explain why distributed transactions don't work here
 3. Walk through the outbox table structure
-4. Mention CDC (Debezium) as an advanced approach
+4. Mention CDC (Debezium) for high-throughput systems
+5. Emphasize idempotent consumers (events may republish)
 
